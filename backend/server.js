@@ -88,7 +88,7 @@ app.use("/api", apiLimiter, generateCsrfToken, csrfProtection, uploadRoutes);
 if (process.env.NODE_ENV === "production") {
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
     app.use(express.static(path.join(__dirname, "../frontend/dist")));
-    app.get("(.*)", (req, res) => {
+    app.get(/.*/, (req, res) => {
         res.sendFile(path.resolve(__dirname, "../frontend", "dist", "index.html"));
     });
 } else {
