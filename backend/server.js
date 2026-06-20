@@ -6,6 +6,7 @@ import rateLimit from "express-rate-limit";
 import path from 'path';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
+import fs from 'fs';
 
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
@@ -85,11 +86,13 @@ app.use("/api/user", apiLimiter, generateCsrfToken, csrfProtection, userRoutes);
 app.use("/api", apiLimiter, generateCsrfToken, csrfProtection, uploadRoutes);
 
 // ── Serve Frontend in Production ──────────────────────────────────────────────
-if (process.env.NODE_ENV === "production") {
-    const __dirname = path.dirname(fileURLToPath(import.meta.url));
-    app.use(express.static(path.join(__dirname, "../frontend/dist")));
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const frontendDistPath = path.join(__dirname, "../frontend/dist");
+
+if (process.env.NODE_ENV === "production" && fs.existsSync(frontendDistPath)) {
+    app.use(express.static(frontendDistPath));
     app.get(/.*/, (req, res) => {
-        res.sendFile(path.resolve(__dirname, "../frontend", "dist", "index.html"));
+        res.sendFile(path.resolve(frontendDistPath, "index.html"));
     });
 } else {
     app.get("/", (req, res) => {
