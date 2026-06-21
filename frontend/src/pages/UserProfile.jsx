@@ -2,10 +2,38 @@ import React from "react";
 import { Mail, Pencil, Home, LayoutDashboard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/authContext";
+import { useUserProfile } from "../hooks/useUserProfile";
+
+const getInitials = (name) => {
+    if (!name) return "?";
+    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+};
+
+const Avatar = ({ user }) => {
+    const avatarUrl = user?.avatar;
+    if (avatarUrl) {
+        return (
+            <img
+                src={avatarUrl}
+                className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-surface-1 object-cover bg-surface-1 shadow-lg"
+                alt="profile"
+                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+            />
+        );
+    }
+    return (
+        <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-surface-1 bg-primary flex items-center justify-center shadow-lg">
+            <span className="text-3xl sm:text-4xl font-bold text-white">{getInitials(user?.name)}</span>
+        </div>
+    );
+};
 
 const UserProfile = () => {
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user: authUser } = useAuth();
+    const { data: profileData } = useUserProfile();
+
+    const user = profileData?.user || authUser;
 
     if (!user) {
         navigate('/login', { replace: true });
@@ -16,6 +44,7 @@ const UserProfile = () => {
         name: user?.name || "User",
         email: user?.email || "No email",
         languages: user?.language ? [user.language] : ["English"],
+        avatar: user?.avatar,
     };
 
     return (
@@ -43,11 +72,7 @@ const UserProfile = () => {
                 <div className="relative h-32 sm:h-44">
                     <div className="h-full w-full bg-gradient-to-r from-primary via-primary-hover to-primary"></div>
                     <div className="absolute -bottom-12 sm:-bottom-14 left-1/2 -translate-x-1/2">
-                        <img
-                            src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde"
-                            className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-surface-1 object-cover bg-surface-1 shadow-lg"
-                            alt="profile"
-                        />
+                        <Avatar user={profile} />
                     </div>
                 </div>
 

@@ -1,7 +1,7 @@
 import { Eye, EyeOff, LockIcon, MailIcon, UserIcon, Home } from "lucide-react";
 import { Link } from "react-router-dom";
 import google from '../assets/google.svg';
-import api from '../utils/axios';
+import api, { API_URL } from '../utils/axios';
 import { useState } from 'react';
 import Loader from "../components/Loader";
 import { useNavigate } from 'react-router-dom';
@@ -37,8 +37,8 @@ export default function Signup() {
         }
         if (!formData.email.trim()) {
             newErrors.email = 'Email is required';
-        } else if (!formData.email.endsWith('@gmail.com')) {
-            newErrors.email = 'Email must end with @gmail.com';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+            newErrors.email = 'Please enter a valid email address';
         }
         if (!formData.password) {
             newErrors.password = 'Password is required';
@@ -64,7 +64,7 @@ export default function Signup() {
 
         try {
             setLoading(true);
-            const res = await api.post('/auth/signup', formData);
+            await api.post('/auth/signup', formData);
             refetchUser();
             setAlert({
                 type: "success",
@@ -72,10 +72,11 @@ export default function Signup() {
                 onClose: () => navigate('/', { replace: true })
             });
         } catch (error) {
+            const serverMsg = error?.response?.data?.message;
             setAlert({
                 type: "error",
-                message: "Something went wrong during signup!",
-                onClose: () => setAlert(null)
+                message: serverMsg || "Something went wrong during signup!",
+                onClose: () => setAlert({ type: "", message: "", onClose: () => { } })
             });
         } finally {
             setLoading(false);
@@ -83,12 +84,12 @@ export default function Signup() {
     };
 
     const handleGoogleSignup = () => {
-        window.location.href = 'http://localhost:5000/api/auth/google';
+        window.location.href = `${API_URL.replace('/api', '')}/api/auth/google`;
     };
 
     return (
         <>
-            {alert.type && (
+            {alert?.type && (
                 <div className="fixed top-6 right-6 z-50 animate-in slide-in-from-top-5">
                     <Alert type={alert.type} message={alert.message} onClose={alert.onClose} />
                 </div>

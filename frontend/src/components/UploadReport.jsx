@@ -1,6 +1,7 @@
-import { FileUp, X, FileText, Loader2 } from 'lucide-react';
+import { FileUp, X, FileText, Loader2, Info } from 'lucide-react';
 import { useUploadReport } from '../hooks/useUploadReport';
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 
 const UploadReport = ({ onClose }) => {
     const [file, setFile] = useState(null);
@@ -8,7 +9,14 @@ const UploadReport = ({ onClose }) => {
     const isUploading = uploadMutation.isPending;
 
     const handleUpload = () => {
-        if (!file) return alert("Please select a file");
+        if (!file) {
+            toast.error("Please select a file");
+            return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            toast.error("File size must be under 10 MB");
+            return;
+        }
 
         const formData = new FormData();
         formData.append("file", file);
@@ -72,7 +80,21 @@ const UploadReport = ({ onClose }) => {
                     )}
                 </div>
 
-                <div className="mt-6 flex justify-end gap-3">
+                {/* Upload Guidelines */}
+                <div className="mt-4 p-3 bg-surface-2 rounded-lg border border-hairline">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Info size={14} className="text-primary" />
+                        <span className="text-xs font-semibold text-ink">Upload Guidelines</span>
+                    </div>
+                    <ul className="text-xs text-ink-tertiary space-y-1 ml-1">
+                        <li>• Supported formats: <strong>PDF, PNG, JPG, JPEG</strong></li>
+                        <li>• Maximum file size: <strong>10 MB</strong></li>
+                        <li>• Example reports: Blood tests, Lipid profiles, Thyroid panels</li>
+                        <li>• Your files are encrypted and securely stored</li>
+                    </ul>
+                </div>
+
+                <div className="mt-4 flex justify-end gap-3">
                     <button
                         onClick={onClose}
                         type="button"

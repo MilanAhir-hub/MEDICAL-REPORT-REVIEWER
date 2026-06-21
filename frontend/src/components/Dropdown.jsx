@@ -1,18 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { ChevronDown } from "lucide-react";
 
 const Dropdown = ({ subject, collection, value, onChange }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [selected, setSelected] = useState(value || "Select");
-
-  useEffect(() => {
-    if (value) {
-      setSelected(value);
-    }
-  }, [value]);
+  const selected = value || "Select";
 
   const handleSelect = (item) => {
-    setSelected(item);
     setIsOpen(false);
     if (onChange) {
       onChange(item);

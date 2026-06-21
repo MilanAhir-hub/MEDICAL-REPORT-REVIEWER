@@ -101,7 +101,7 @@ The app will be available at `http://localhost:5173`.
 Create `backend/.env` based on `backend/.env.example`:
 
 ```env
-PORT=5000
+PORT=5001
 NODE_ENV=development
 
 MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/medical-reports
@@ -116,7 +116,7 @@ CLOUDINARY_API_SECRET=your_api_secret
 
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_REDIRECT_URI=http://localhost:5000/api/auth/google/callback
+GOOGLE_REDIRECT_URI=http://localhost:5001/api/auth/google/callback
 
 FRONTEND_URL=http://localhost:5173
 ```

@@ -37,7 +37,7 @@ const BuildProcess = () => {
 
             {/* Process Steps */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                {steps.map((step, index) => (
+                {steps.map((step) => (
                     <div
                         key={step.number}
                         className="group relative p-8 rounded-xl border border-hairline bg-surface-2 hover:border-hairline-strong transition-all duration-200"

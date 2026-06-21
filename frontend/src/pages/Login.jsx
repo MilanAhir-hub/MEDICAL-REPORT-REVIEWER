@@ -1,7 +1,7 @@
 import { LockIcon, MailIcon, Home, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import google from "../assets/google.svg";
-import api from "../utils/axios";
+import api, { API_URL } from "../utils/axios";
 import Button from "../components/Button";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -59,7 +59,7 @@ export default function Login() {
 
         try {
             setLoading(true);
-            const response = await api.post("/auth/login", formData);
+            await api.post("/auth/login", formData);
             refetchUser();
             setAlert({
                 type: "success",
@@ -67,9 +67,10 @@ export default function Login() {
                 onClose: () => navigate('/', { replace: true })
             });
         } catch (error) {
+            const serverMsg = error?.response?.data?.message;
             setAlert({
                 type: "error",
-                message: "Failed to login!",
+                message: serverMsg || "Failed to login. Please check your credentials.",
                 onClose: () => setAlert({ type: "", message: "", onClose: () => { } })
             });
         } finally {
@@ -78,7 +79,7 @@ export default function Login() {
     };
 
     const handleGoogleLogin = () => {
-        window.location.href = 'http://localhost:5000/api/auth/google';
+        window.location.href = `${API_URL.replace('/api', '')}/api/auth/google`;
     };
 
     return (

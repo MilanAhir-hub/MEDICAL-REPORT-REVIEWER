@@ -67,7 +67,6 @@ export const signup = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Registration failed!',
-            error: error.message
         });
     }
 };
@@ -88,7 +87,7 @@ export const login = async (req, res) => {
         if (!user) {
             return res.status(401).json({
                 success: false,
-                message: "Email not found, kindly check your email and try again!"
+                message: "Invalid email or password"
             });
         }
 
@@ -104,7 +103,7 @@ export const login = async (req, res) => {
         if (!isMatch) {
             return res.status(401).json({
                 success: false,
-                message: "Invalid password, cannot login"
+                message: "Invalid email or password"
             });
         }
 
@@ -135,7 +134,6 @@ export const login = async (req, res) => {
         res.status(500).json({
             success: false,
             message: "Login failed!",
-            error: error.message
         });
     }
 };
@@ -191,7 +189,6 @@ export const getMe = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to get user data',
-            error: error.message
         });
     }
 };

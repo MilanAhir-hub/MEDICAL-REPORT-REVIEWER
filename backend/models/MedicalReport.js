@@ -56,6 +56,17 @@ const MedicalReportSchema = new mongoose.Schema({
     },
 
     normalizedData: Object,
+
+    status: {
+        type: String,
+        enum: ["uploaded", "extracting", "analyzing", "completed", "failed"],
+        default: "uploaded",
+    },
+
+    errorMessage: {
+        type: String,
+        default: "",
+    },
 }, {
     timestamps: true,
 });
@@ -63,6 +74,7 @@ const MedicalReportSchema = new mongoose.Schema({
 // Indexes for dashboard queries
 MedicalReportSchema.index({userId: 1});
 MedicalReportSchema.index({riskLevel: 1});
+MedicalReportSchema.index({status: 1});
 MedicalReportSchema.index({createdAt: 1});
 
 export default mongoose.model("MedicalReport", MedicalReportSchema);

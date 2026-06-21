@@ -11,6 +11,8 @@ import AuthProvider from './context/authContext';
 import { ThemeProvider } from './context/themeContext';
 import { Toaster } from 'react-hot-toast';
 import ErrorBoundary from './components/ErrorBoundary';
+import ProtectedRoute from './components/ProtectedRoute';
+import GuestRoute from './components/GuestRoute';
 
 const App = () => {
     return (
@@ -20,12 +22,12 @@ const App = () => {
                     <BrowserRouter>
                         <Routes>
                             <Route path="/" element={<Home />} />
-                            <Route path="/login" element={<Login />} />
-                            <Route path="/signup" element={<Signup />} />
-                            <Route path="/userDashboard" element={<UserDashboard />} />
-                            <Route path="/userProfile" element={<UserProfile />} />
-                            <Route path="/editProfile" element={<EditProfile />} />
-                            <Route path="/report/:reportId" element={<DetailedReport />} />
+                            <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
+                            <Route path="/signup" element={<GuestRoute><Signup /></GuestRoute>} />
+                            <Route path="/userDashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
+                            <Route path="/userProfile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+                            <Route path="/editProfile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
+                            <Route path="/report/:reportId" element={<ProtectedRoute><DetailedReport /></ProtectedRoute>} />
                         </Routes>
                         <Toaster
                             position="top-right"

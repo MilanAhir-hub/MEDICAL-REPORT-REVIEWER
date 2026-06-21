@@ -6,7 +6,6 @@ const Alert = ({
     message = "Operation completed!",
     onClose
 }) => {
-    const [isVisible, setIsVisible] = useState(true);
     const [isExiting, setIsExiting] = useState(false);
 
     useEffect(() => {

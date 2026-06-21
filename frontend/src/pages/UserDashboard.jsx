@@ -7,11 +7,8 @@ import { useNavigate } from 'react-router-dom';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useAnalyzeReport } from '../hooks/useAnalyzeReport';
 import { useDeleteReport } from '../hooks/useDeleteReport';
-import { useAuth } from '../context/authContext';
-
 const UserDashboard = () => {
     const navigate = useNavigate();
-    const { user: authUser, status } = useAuth();
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [analyzingId, setAnalyzingId] = useState(null);
     const [reportToDelete, setReportToDelete] = useState(null);
@@ -123,7 +120,24 @@ const UserDashboard = () => {
                                 </div>
                             )}
 
-                            {!isLoading && !isError && data?.reports?.map((report) => (
+                            {!isLoading && !isError && data?.reports?.map((report) => {
+                                const statusBadge = () => {
+                                    if (report.status === 'completed' || report.summary) {
+                                        return <span className="text-xs font-medium px-3 py-1.5 rounded-full bg-success/10 text-success border border-success/20">Analyzed</span>;
+                                    }
+                                    if (report.status === 'failed') {
+                                        return <span className="text-xs font-medium px-3 py-1.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">Failed</span>;
+                                    }
+                                    if (report.status === 'analyzing') {
+                                        return <span className="text-xs font-medium px-3 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20 animate-pulse">Analyzing...</span>;
+                                    }
+                                    if (report.status === 'extracting') {
+                                        return <span className="text-xs font-medium px-3 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20 animate-pulse">Processing...</span>;
+                                    }
+                                    return <span className="text-xs font-medium px-3 py-1.5 rounded-full bg-surface-2 text-ink-tertiary border border-hairline">Pending</span>;
+                                };
+
+                                return (
                                 <div
                                     key={report._id}
                                     className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5 bg-surface-1 border border-hairline rounded-xl hover:border-hairline-strong transition-all duration-200 cursor-pointer"
@@ -146,11 +160,9 @@ const UserDashboard = () => {
                                     </div>
 
                                     <div className="flex items-center gap-3 w-full sm:w-auto">
-                                        {report.summary ? (
-                                            <span className="text-xs font-medium px-3 py-1.5 rounded-full bg-success/10 text-success border border-success/20">
-                                                Analyzed
-                                            </span>
-                                        ) : (
+                                        {statusBadge()}
+
+                                        {!report.summary && report.status !== 'failed' && report.status !== 'analyzing' && report.status !== 'extracting' && (
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -173,6 +185,23 @@ const UserDashboard = () => {
                                                         <span>Analyze</span>
                                                     </>
                                                 )}
+                                            </button>
+                                        )}
+
+                                        {report.status === 'failed' && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setAnalyzingId(report._id);
+                                                    analyzeReport(report._id, {
+                                                        onSettled: () => setAnalyzingId(null)
+                                                    });
+                                                }}
+                                                disabled={analyzingId === report._id}
+                                                className="flex items-center gap-2 px-4 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-primary-hover transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                <Sparkles size={14} />
+                                                <span>Retry</span>
                                             </button>
                                         )}
 
@@ -206,7 +235,8 @@ const UserDashboard = () => {
                                         </button>
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 </div>

@@ -214,7 +214,13 @@ const DetailedReport = () => {
                 <div className="text-center">
                     <AlertCircle className="text-red-400 mx-auto mb-4" size={48} />
                     <h2 className="text-2xl font-bold text-ink mb-2">Error Loading Report</h2>
-                    <p className="text-ink-subtle">{error?.message || 'Failed to load report analysis'}</p>
+                    <p className="text-ink-subtle mb-6">{error?.message || 'Failed to load report analysis'}</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="px-6 py-2.5 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-hover transition-all duration-200"
+                    >
+                        Try Again
+                    </button>
                 </div>
             </div>
         );
@@ -308,6 +314,22 @@ const DetailedReport = () => {
                         </Button>
                     </div>
                 </div>
+
+                {/* Extracted Text Preview */}
+                {report.extractedText && report.status !== 'completed' && (
+                    <div className="bg-surface-1 rounded-xl border border-hairline p-6 mb-6">
+                        <div className="flex items-center gap-2 mb-4">
+                            <FileText className="text-primary" size={20} />
+                            <h2 className="text-lg font-semibold text-ink">Extracted Text Preview</h2>
+                        </div>
+                        <div className="bg-surface-2 rounded-lg p-4 border border-hairline max-h-60 overflow-y-auto">
+                            <pre className="text-xs text-ink-muted whitespace-pre-wrap font-mono leading-relaxed">
+                                {report.extractedText}
+                            </pre>
+                        </div>
+                        <p className="text-xs text-ink-tertiary mt-3">This is the raw text extracted from your report before AI analysis.</p>
+                    </div>
+                )}
 
                 {/* Patient-Friendly Summary */}
                 <div className="bg-surface-1 rounded-xl border border-hairline p-6 mb-6">

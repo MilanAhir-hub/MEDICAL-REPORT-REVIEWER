@@ -30,12 +30,25 @@ export const uploadReport = async (req, res) => {
             folderName = "hospital_reports/pdfs";
         }
 
-        // Upload to Cloudinary FIRST (before buffer gets consumed)
+        // Create report entry with status
+        const reportData = await MedicalReport.create({
+            userId: req.user.id,
+            title: report.originalname,
+            fileUrl: "pending",
+            fileType: "image",
+            reportType,
+            status: "extracting",
+        });
+
+        // Upload to Cloudinary
         const result = await uploadToCloudinary(report.buffer, folderName);
         logger.info(`Cloudinary upload complete — public_id: ${result.public_id}`);
 
+        // Update file URL
+        await reportData.updateOne({ fileUrl: result.secure_url, publicId: result.public_id });
+
         // Extract raw text from the file
-        const rawText = await extractRawTextFromFile(report.buffer);
+        const rawText = await extractRawTextFromFile({ buffer: report.buffer });
 
         if (!rawText || rawText.trim().length < 30) {
             throw Object.assign(
@@ -54,20 +67,18 @@ export const uploadReport = async (req, res) => {
 
         const fileType = report.mimetype === "application/pdf" ? "pdf" : "image";
 
-        const reportData = await MedicalReport.create({
-            userId: req.user.id,
-            title: report.originalname,
-            publicId: result.public_id,
-            fileUrl: result.secure_url,
+        await reportData.updateOne({
             fileType,
-            reportType,
-            summary: "",
             extractedText: rawText,
-            riskLevel: "low",
             normalizedData,
+            status: "uploaded",
+            riskLevel: "low",
         });
 
-        logger.info(`Report saved to DB — reportId: ${reportData._id}`);
+        // Re-fetch the updated report
+        const updatedReport = await MedicalReport.findById(reportData._id);
+
+        logger.info(`Report saved to DB — reportId: ${updatedReport._id}`);
 
         return res.status(200).json({
             success: true,
@@ -78,11 +89,26 @@ export const uploadReport = async (req, res) => {
                 file_type: report.mimetype,
                 folder: folderName,
                 raw_text: rawText,
-                reportData,
+                reportData: updatedReport,
             },
         });
     } catch (error) {
         logger.error('Upload error', error);
+
+        // Mark report as failed if it was created
+        try {
+            if (reportData && reportData._id) {
+                await reportData.updateOne({ status: "failed", errorMessage: error.message });
+            }
+        } catch (_) {}
+
+        // Clean up Cloudinary file if uploaded
+        try {
+            if (result && result.public_id) {
+                await cloudinary.uploader.destroy(result.public_id);
+            }
+        } catch (_) {}
+
         return res.status(error.http_code || 500).json({
             success: false,
             message: error.http_code === 400
@@ -127,6 +153,9 @@ export const reportAnalysis = async (req, res) => {
             });
         }
 
+        // Set status to analyzing
+        await report.updateOne({ status: "analyzing" });
+
         const normalizedData = report.normalizedData;
         const summary = await analyzeReport(normalizedData, language);
 
@@ -140,6 +169,7 @@ export const reportAnalysis = async (req, res) => {
             abnormalFindings: summary.aiAnalysis.abnormalFindings,
             explanations: summary.aiAnalysis.explanations,
             suggestions: summary.aiAnalysis.suggestions,
+            status: "completed",
         });
 
         logger.info(`Report updated with analysis — reportId: ${reportId}`);
@@ -165,6 +195,14 @@ export const reportAnalysis = async (req, res) => {
             errorMessage = error.message;
         }
 
+        // Set report status to failed
+        try {
+            const { reportId } = req.body;
+            if (reportId) {
+                await MedicalReport.updateOne({ _id: reportId }, { status: "failed", errorMessage });
+            }
+        } catch (_) {}
+
         return res.status(statusCode).json({
             success: false,
             message: errorMessage,
@@ -175,13 +213,14 @@ export const reportAnalysis = async (req, res) => {
 export const getReport = async (req, res) => {
     try {
         const userId = req.user.id;
+        const { reportId } = req.params;
 
-        const report = await MedicalReport.findOne({ userId }).sort({ createdAt: -1 });
+        const report = await MedicalReport.findOne({ _id: reportId, userId });
 
         if (!report) {
             return res.status(404).json({
                 success: false,
-                message: "No report found for this user",
+                message: "Report not found or unauthorized",
             });
         }
 
@@ -201,19 +240,36 @@ export const getReport = async (req, res) => {
 export const getReports = async (req, res) => {
     try {
         const userId = req.user.id;
+        const { page = 1, limit = 10, risk, status, startDate, endDate } = req.query;
 
-        const reports = await MedicalReport.find({ userId }).sort({ createdAt: -1 });
+        const filter = { userId };
 
-        if (!reports) {
-            return res.status(404).json({
-                success: false,
-                message: "No reports found for this user",
-            });
+        if (risk) filter.riskLevel = risk;
+        if (status) filter.status = status;
+        if (startDate || endDate) {
+            filter.createdAt = {};
+            if (startDate) filter.createdAt.$gte = new Date(startDate);
+            if (endDate) filter.createdAt.$lte = new Date(endDate);
         }
+
+        const pageNum = parseInt(page, 10);
+        const limitNum = parseInt(limit, 10);
+        const skip = (pageNum - 1) * limitNum;
+
+        const [reports, total] = await Promise.all([
+            MedicalReport.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limitNum),
+            MedicalReport.countDocuments(filter),
+        ]);
 
         return res.status(200).json({
             success: true,
-            reports
+            reports,
+            pagination: {
+                page: pageNum,
+                limit: limitNum,
+                total,
+                pages: Math.ceil(total / limitNum),
+            },
         });
     } catch (error) {
         logger.error('Get reports error', error);
