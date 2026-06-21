@@ -12,7 +12,8 @@ import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import uploadRoutes from './routes/report.routes.js';
 import connectDB from "./config/db.js";
-import { generateCsrfToken, csrfProtection } from './middleware/csrf.js';
+// CSRF middleware removed — Bearer token auth via Authorization header
+// is inherently immune to CSRF attacks (browsers can't forge custom headers).
 import mongoose from "mongoose";
 import logger from "./utils/logger.js";
 
@@ -81,9 +82,9 @@ app.get('/api/health', async (req, res) => {
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 
-app.use("/api/auth", authLimiter, generateCsrfToken, csrfProtection, authRoutes);
-app.use("/api/user", apiLimiter, generateCsrfToken, csrfProtection, userRoutes);
-app.use("/api", apiLimiter, generateCsrfToken, csrfProtection, uploadRoutes);
+app.use("/api/auth", authLimiter, authRoutes);
+app.use("/api/user", apiLimiter, userRoutes);
+app.use("/api", apiLimiter, uploadRoutes);
 
 // ── Serve Frontend in Production ──────────────────────────────────────────────
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

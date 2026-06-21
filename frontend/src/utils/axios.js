@@ -24,8 +24,9 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       console.log("Unauthorized – redirect to login");
-      // Optionally clear the token cookie on 401
-      Cookies.remove("token");
+      // Token cleanup is handled by the logout flow, not here.
+      // Removing the token here caused a race condition where the
+      // initial /auth/me check would wipe a freshly stored token.
     }
     return Promise.reject(error); 
   }

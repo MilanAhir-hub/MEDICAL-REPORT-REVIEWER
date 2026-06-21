@@ -1,4 +1,5 @@
 import { LockIcon, MailIcon, Home, Eye, EyeOff } from "lucide-react";
+import Cookies from 'js-cookie';
 import { Link } from "react-router-dom";
 import google from "../assets/google.svg";
 import api, { API_URL } from "../utils/axios";
@@ -59,7 +60,10 @@ export default function Login() {
 
         try {
             setLoading(true);
-            await api.post("/auth/login", formData);
+            const res = await api.post("/auth/login", formData);
+            if (res.data.token) {
+                Cookies.set("token", res.data.token, { expires: 7 });
+            }
             refetchUser();
             setAlert({
                 type: "success",

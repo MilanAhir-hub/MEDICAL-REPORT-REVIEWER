@@ -105,7 +105,10 @@ router.get("/google/callback", async (req, res) => {
         });
 
         // Redirect to dashboard after successful Google login
-        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/userProfile`);
+        // Pass token as query param for cross-domain deployments
+        // (httpOnly cookies won't be sent cross-site by modern browsers)
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        res.redirect(`${frontendUrl}/userProfile?token=${token}`);
     } catch (error) {
         logger.error('Google auth error', error);
         res.status(500).json({

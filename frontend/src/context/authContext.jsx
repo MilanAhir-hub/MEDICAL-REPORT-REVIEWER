@@ -1,6 +1,7 @@
 //it shares the status of the authentication towards whole page
 
 import { createContext, useState, useEffect, useContext } from "react";
+import Cookies from 'js-cookie';
 import api from "../utils/axios";
 
 const authContext = createContext(); // create context
@@ -28,6 +29,17 @@ const AuthProvider = ({ children }) => {
     };
 
     useEffect(() => {
+        // Handle token from Google OAuth redirect (passed as URL query param
+        // because cross-domain httpOnly cookies don't work in modern browsers)
+        const params = new URLSearchParams(window.location.search);
+        const tokenFromUrl = params.get('token');
+        if (tokenFromUrl) {
+            Cookies.set('token', tokenFromUrl, { expires: 7 });
+            // Clean the token from the URL without a full page reload
+            const cleanUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
+        }
+
         checkAuth();
     }, []); // [] means run only once
 
@@ -43,7 +55,8 @@ const AuthProvider = ({ children }) => {
         } catch (error) {
             console.log("Logout error:", error);
         } finally {
-            // Clear user state regardless of API call success
+            // Clear token cookie and user state
+            Cookies.remove("token");
             setUser(null);
             setStatus(false);
         }
@@ -60,3 +73,4 @@ const AuthProvider = ({ children }) => {
 export const useAuth = () => useContext(authContext);
 
 export default AuthProvider;
+
