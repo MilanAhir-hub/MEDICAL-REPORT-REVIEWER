@@ -197,6 +197,31 @@ const DetailedReport = () => {
         doc.save(`${safeTitle}_analysis.pdf`);
     };
 
+    const handleDownloadOriginal = () => {
+        if (!report?.fileUrl) return;
+        
+        let downloadUrl = report.fileUrl;
+        
+        // Force Cloudinary download using attachment flag if applicable
+        if (downloadUrl.includes('cloudinary.com') && downloadUrl.includes('/upload/')) {
+            downloadUrl = downloadUrl.replace('/upload/', '/upload/fl_attachment/');
+        }
+        
+        // Trigger download via programmatically created link
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        
+        const extension = report.fileType === 'pdf' ? 'pdf' : 'png';
+        const filename = (report.title || 'report').replace(/\.[^/.]+$/, "");
+        link.download = `${filename}.${extension}`;
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     if (isLoading) {
         return (
             <div className="min-h-screen bg-canvas py-12 px-6 flex items-center justify-center">
@@ -307,7 +332,7 @@ const DetailedReport = () => {
                         <Button
                             variant="secondary"
                             className="flex items-center gap-2"
-                            onClick={() => window.open(report.fileUrl, '_blank')}
+                            onClick={handleDownloadOriginal}
                         >
                             <Download size={16} strokeWidth={2} />
                             Download
