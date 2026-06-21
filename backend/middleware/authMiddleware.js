@@ -3,8 +3,11 @@ import tokenBlacklistModel from "../models/tokenBlacklist.js";
 
 const protect = async (req, res, next) => {
     try {
-        // Read token from cookie
-        const token = req.cookies.token;
+        // Read token from cookie or Authorization header
+        let token = req.cookies.token;
+        if (!token && req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
+            token = req.headers.authorization.split(" ")[1];
+        }
   
         req.token = token;
         if (!token) {
